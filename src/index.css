@@ -1,0 +1,41 @@
+body {
+  overflow-x: scroll;
+}
+
+.colorBlock {
+  height: 200px;
+  margin: 10px;
+  border: 1px solid white;
+  outline: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.column {
+  width: 200px;
+  height: 90vh;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.contrastBlock {
+  height: 200px;
+  margin: 10px;
+}
+
+.headerBlock {
+  height: 200px;
+  margin: 10px;
+  font-weight: bold;
+  font-size: 18pt;
+}
+
+.columnWrapper {
+  display: flex;
+  flex-direction: row;
+}
+
+.colorPreviewBlock {
+  height: 100%;
+}
