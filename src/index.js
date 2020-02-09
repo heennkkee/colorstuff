@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import { SketchPicker, BlockPicker, PhotoshopPicker, HuePicker, SliderPicker, MaterialPicker, AlphaPicker, GithubPicker, TwitterPicker } from 'react-color';
+import { SketchPicker, BlockPicker, PhotoshopPicker, HuePicker, SliderPicker, MaterialPicker, AlphaPicker, GithubPicker, TwitterPicker, ChromePicker } from 'react-color';
 
 class ColorColumn extends React.Component {
     render() {
@@ -16,7 +16,10 @@ class ColorColumn extends React.Component {
         }
         return (
             <div className="column">
-                <button onClick={() => this.props.handleOnClickRemove(this.props.index)}>Ta bort</button>
+                <div>
+                    <button onClick={() => this.props.handleOnClickEdit(this.props.index)}>Ändra färg</button>
+                    <button onClick={() => this.props.handleOnClickRemove(this.props.index)}>Ta bort</button>
+                </div>
                 {renderColorBlock(this.props.Color)}
                 {renderColorBlock(this.props.Color.toGrayscale())}
             </div>
@@ -152,13 +155,33 @@ class ColorPickerWrap extends React.Component {
         super(props);
         this.state = {
             colors: [
+                '#697689',
+                '#f47373'
             ],
-            colorToAdd: '#000000'
+            colorToAdd: '#000000',
+            editingIndex: null
         }
 
         this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
         this.addColor = this.addColor.bind(this);
         this.colorPickerComplete = this.colorPickerComplete.bind(this);
+        this.handleOnClickEdit = this.handleOnClickEdit.bind(this);
+        this.handleEditColorChange = this.handleEditColorChange.bind(this);
+        this.quitEditing = this.quitEditing.bind(this);
+    }
+
+    handleEditColorChange(color) {
+        let colors = this.state.colors.slice();
+        colors[this.state.editingIndex] = color.hex;
+        this.setState({colors: colors});
+    }
+    
+    quitEditing() {
+        this.setState({editingIndex: null});
+    }
+
+    handleOnClickEdit(index) {
+        this.setState({editingIndex: index});
     }
 
     colorPickerComplete(color) {
@@ -191,7 +214,12 @@ class ColorPickerWrap extends React.Component {
             let color = new Color(value);
             let key = "color_" + index + '_' + value;
             return (
-                <ColorColumn index={index} handleOnClickRemove={this.handleOnClickRemove} Color={color} key={key} />
+                <ColorColumn index={index} 
+                    handleOnClickRemove={this.handleOnClickRemove} 
+                    Color={color} 
+                    key={key} 
+                    handleOnClickEdit={this.handleOnClickEdit}
+                />
             );
         });
 
@@ -210,12 +238,32 @@ class ColorPickerWrap extends React.Component {
             </div>
         );
 
+        let editColor;
+        if (this.state.editingIndex !== null) {
+            
+            editColor = <div style={{display: 'inline-block', margin: '10px 10px 10px 150px'}}>
+                    <ChromePicker 
+                        color={this.state.colors[this.state.editingIndex]} 
+                        onChange={this.handleEditColorChange}
+                    />
+                    <button
+                        onClick={this.quitEditing}
+                    >Stäng</button>
+                </div>
+            
+        }
+
         return (
             <div>
-                <BlockPicker color={this.state.colorToAdd}
-                onChangeComplete={this.colorPickerComplete}
-                triangle="hide" />
-                <button onClick={this.addColor}>Lägg till</button>
+                <div style={{display: 'inline-block', margin: '10px'}}>
+                    <BlockPicker color={this.state.colorToAdd}
+                    onChangeComplete={this.colorPickerComplete}
+                    triangle="hide" />
+                    <button onClick={this.addColor}>Lägg till</button>
+                </div>
+                
+                {editColor}
+
                 <div className="columnWrapper">
                     {headerRow}
                     {colorColumns}
