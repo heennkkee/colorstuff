@@ -1,27 +1,35 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import { SketchPicker, BlockPicker, PhotoshopPicker, HuePicker, SliderPicker, MaterialPicker, AlphaPicker, GithubPicker, TwitterPicker, ChromePicker } from 'react-color';
+import { ChromePicker } from 'react-color';
 
 class ColorColumn extends React.Component {
     render() {
+        function renderColorBlock(col, includeButtons, index = 0, onEdit = null, onRemove = null) {
+            let buttons;
 
-        function renderColorBlock(col) {
+            if (includeButtons) {
+                buttons = <div className="colorPreviewButtons">
+                    <button className="button" onClick={() => onEdit(index)}><i className="fas fa-palette fa-2x"></i></button>
+                    <button className="button" onClick={() => onRemove(index)}><i className="fas fa-trash fa-2x"></i></button>
+                </div>;
+            }
+
             return (
                 <div className="colorBlock">
                     <h3>{col.hex}</h3>
-                    <div className="colorPreviewBlock" style={{backgroundColor: col.hex}}></div>
+                    <div className="colorPreviewBlock" style={{ backgroundColor: col.hex }}>
+                        {buttons}
+                    </div>
                 </div>
             )
         }
+
+
         return (
             <div className="column">
-                <div>
-                    <button onClick={() => this.props.handleOnClickEdit(this.props.index)}>Ändra färg</button>
-                    <button onClick={() => this.props.handleOnClickRemove(this.props.index)}>Ta bort</button>
-                </div>
-                {renderColorBlock(this.props.Color)}
-                {renderColorBlock(this.props.Color.toGrayscale())}
+                {renderColorBlock(this.props.Color, true, this.props.index, this.props.handleOnClickEdit, this.props.handleOnClickRemove)}
+                {renderColorBlock(this.props.Color.toGrayscale(), false)}
             </div>
         )
     }
@@ -36,14 +44,54 @@ class ColorContrastColumn extends React.Component {
         function renderContrastBlock(col1, col2) {
             const lum1 = col1.humanRelativeLuminance;
             const lum2 = col2.humanRelativeLuminance;
-    
+
             const contrast = Math.round(((Math.max(lum1, lum2) + 0.05) / (Math.min(lum1, lum2) + 0.05)) * 100) / 100;
 
             return (
                 <div className="contrastBlock">
-                    <p>Contrast: {contrast}</p>
+                    <table className="contrastTable">
+                        <tbody>
+                            <tr>
+                                <td>Contrast:</td><td><b>{forceTwoDecimals(contrast)}</b></td>
+                            </tr><tr className="wcag-level-row">
+                                <td colSpan="2">AA</td>
+                            </tr><tr>
+                                <td>Graphics:</td><td>{checkOrTimes(contrast, 3)}</td>
+                            </tr><tr>
+                                <td>Normal text:</td><td>{checkOrTimes(contrast, 4.5)}</td>
+                            </tr><tr>
+                                <td>Large text:</td><td>{checkOrTimes(contrast, 3)}</td>
+                            </tr><tr className="wcag-level-row">
+                                <td colSpan="2">AAA</td>
+                            </tr><tr>
+                                <td>Normal text:</td><td>{checkOrTimes(contrast, 7)}</td>
+                            </tr><tr>
+                                <td>Large text:</td><td>{checkOrTimes(contrast, 4.5)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             );
+        }
+
+        function forceTwoDecimals(val) {
+            const strVal = String(val);
+            let decimals = strVal.split(".")[1];
+
+            if (decimals === undefined) {
+                return strVal + ".00";
+            } else if (decimals.length === 1) {
+                return strVal + "0";
+            } else {
+                return strVal;
+            }
+        }
+
+        function checkOrTimes(value, limit) {
+            if (value >= limit) {
+                return <i className="icon-positive fas fa-check"></i>
+            }
+            return <i className="icon-negative fas fa-times"></i>
         }
 
         return (
@@ -74,7 +122,7 @@ class Color {
                 parseInt(hexNumerical.slice(2, 4), 16),
                 parseInt(hexNumerical.slice(4, 6), 16),
             ];
-            this.RGB = {red: r, green: g, blue: b};
+            this.RGB = { red: r, green: g, blue: b };
         }
         return this.rgbValues;
     }
@@ -129,16 +177,16 @@ class Color {
 
     toGrayscale() {
         const hrl = this.humanRelativeLuminance;
-        let revHrl = (hrl > 0.0031308) ? 
-        Math.pow((hrl * 1.055), (1 / 2.4)) - 0.055 :
-        hrl * 12.92;
+        let revHrl = (hrl > 0.0031308) ?
+            Math.pow((hrl * 1.055), (1 / 2.4)) - 0.055 :
+            hrl * 12.92;
         return new Color(Color.sRGBtoHex(revHrl, revHrl, revHrl));
     }
 
     static RGBtoHex(red, green, blue) {
-        return (zeroPad(Math.round(red).toString(16)) 
-        + zeroPad(Math.round(green).toString(16)) 
-        + zeroPad(Math.round(blue).toString(16)));
+        return (zeroPad(Math.round(red).toString(16))
+            + zeroPad(Math.round(green).toString(16))
+            + zeroPad(Math.round(blue).toString(16)));
     }
     static sRGBtoHex(red, green, blue) {
         return Color.RGBtoHex(255 * red, 255 * green, 255 * blue);
@@ -155,50 +203,63 @@ class ColorPickerWrap extends React.Component {
         super(props);
         this.state = {
             colors: [
-                '#697689',
-                '#f47373'
+                '#000000',
+                '#6F6F6F'
             ],
             colorToAdd: '#000000',
             editingIndex: null
         }
 
+        this.editColorBackup = null;
+
         this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
         this.addColor = this.addColor.bind(this);
-        this.colorPickerComplete = this.colorPickerComplete.bind(this);
+        this.handleAddColorChange = this.handleAddColorChange.bind(this);
         this.handleOnClickEdit = this.handleOnClickEdit.bind(this);
         this.handleEditColorChange = this.handleEditColorChange.bind(this);
-        this.quitEditing = this.quitEditing.bind(this);
+        this.saveEditing = this.saveEditing.bind(this);
+        this.abortEditing = this.abortEditing.bind(this);
     }
 
     handleEditColorChange(color) {
         let colors = this.state.colors.slice();
         colors[this.state.editingIndex] = color.hex;
-        this.setState({colors: colors});
+        this.setState({ colors: colors });
     }
-    
-    quitEditing() {
-        this.setState({editingIndex: null});
+
+    handleAddColorChange(color) {
+        this.setState({colorToAdd: color.hex});
+    }
+
+    saveEditing() {
+        this.setState({ editingIndex: null });
+    }
+
+    abortEditing() {
+        let colors = this.state.colors.slice();
+        colors[this.state.editingIndex] = this.editColorBackup;
+        this.setState({ colors: colors, editingIndex: null });
     }
 
     handleOnClickEdit(index) {
-        this.setState({editingIndex: index});
-    }
+        let colors = this.state.colors.slice();
+        this.editColorBackup = colors[index];
+        console.log(this.editColorBackup);
 
-    colorPickerComplete(color) {
-        this.setState({colorToAdd: color.hex})
+        this.setState({ editingIndex: index });
     }
 
     addColor() {
         let colors = this.state.colors.slice();
         colors.push(this.state.colorToAdd);
-
-        this.setState({colors: colors, colorToAdd: '#000000'});        
+        
+        this.setState({ colors: colors, colorToAdd: '#000000' });
     }
 
     handleOnClickRemove(index) {
         let colors = this.state.colors.slice();
         colors.splice(index, 1);
-        this.setState({colors: colors});
+        this.setState({ colors: colors, editingIndex: null });
     }
 
 
@@ -214,10 +275,10 @@ class ColorPickerWrap extends React.Component {
             let color = new Color(value);
             let key = "color_" + index + '_' + value;
             return (
-                <ColorColumn index={index} 
-                    handleOnClickRemove={this.handleOnClickRemove} 
-                    Color={color} 
-                    key={key} 
+                <ColorColumn index={index}
+                    handleOnClickRemove={this.handleOnClickRemove}
+                    Color={color}
+                    key={key}
                     handleOnClickEdit={this.handleOnClickEdit}
                 />
             );
@@ -240,35 +301,39 @@ class ColorPickerWrap extends React.Component {
 
         let editColor;
         if (this.state.editingIndex !== null) {
-            
-            editColor = <div style={{display: 'inline-block', margin: '10px 10px 10px 150px'}}>
-                    <ChromePicker 
-                        color={this.state.colors[this.state.editingIndex]} 
-                        onChange={this.handleEditColorChange}
-                    />
-                    <button
-                        onClick={this.quitEditing}
-                    >Stäng</button>
-                </div>
-            
+
+            editColor = <div style={{ display: 'inline-block', margin: '10px 10px 10px 150px' }}>
+                <ChromePicker
+                    color={this.state.colors[this.state.editingIndex]}
+                    onChange={this.handleEditColorChange}
+                />
+                <button
+                    onClick={this.saveEditing}
+                    className="button"
+                ><i className="fas fa-check"></i> Select</button>
+                <button
+                    onClick={this.abortEditing}
+                    className="button"
+                ><i className="fas fa-undo"></i> Cancel</button>
+            </div>
+
         }
 
         return (
-            <div>
-                <div style={{display: 'inline-block', margin: '10px'}}>
-                    <BlockPicker color={this.state.colorToAdd}
-                    onChangeComplete={this.colorPickerComplete}
-                    triangle="hide" />
-                    <button onClick={this.addColor}>Lägg till</button>
+            <>
+                <div style={{ display: 'inline-block', margin: '10px' }}>
+                    <ChromePicker color={this.state.colorToAdd}
+                        onChange={this.handleAddColorChange} />
+                    <button className="button" onClick={this.addColor}><i className="fas fa-plus"></i> Add</button>
                 </div>
-                
+
                 {editColor}
 
                 <div className="columnWrapper">
                     {headerRow}
                     {colorColumns}
                 </div>
-            </div>
+            </>
         )
     }
 }
@@ -278,9 +343,11 @@ class Layout extends React.Component {
     render() {
         return (
             <div>
-                <header>Color stuff</header>
-                <ColorPickerWrap />
-                <footer>Willkommen</footer>
+                <header className="header">Color contrasts</header>
+                <div className="wrapper main">
+                    <ColorPickerWrap />
+                    <p>Made by Henrik</p>
+                </div>
             </div>
         );
     }

@@ -1,4 +1,8 @@
 body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial;
+  background-color: #efefef;
   overflow-x: scroll;
 }
 
@@ -12,16 +16,57 @@ body {
   text-align: center;
 }
 
+.wcag-level-row {
+  text-align: center;
+  font-weight: bold;
+}
+
+.wcag-level-row > td {
+  padding-top: 0.5rem;
+}
+
+.icon-positive {
+  color: green;
+}
+
+.icon-negative {
+  color: red;
+}
+
 .column {
   width: 200px;
-  height: 90vh;
   display: inline-flex;
   flex-direction: column;
+  flex-shrink: 0;
+}
+
+.wrapper {
+  width: 90%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.main {
+  background-color: white;
+  border-radius: 0 0 25px 25px;
+  padding: 0.5rem;
 }
 
 .contrastBlock {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
   height: 200px;
   margin: 10px;
+}
+
+.contrastTable {
+  width: 100%;
+}
+
+.contrastTable > tbody > tr > td:nth-child(2) {
+  text-align: right;
 }
 
 .headerBlock {
@@ -34,8 +79,37 @@ body {
 .columnWrapper {
   display: flex;
   flex-direction: row;
+  width: 100%;
+  overflow-x: auto;
 }
 
 .colorPreviewBlock {
   height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.button {
+  padding: 0.5rem;
+  margin: 0.5rem;
+  cursor: pointer;
+  background-color: #2196F3;
+  border-radius: 5px;
+  border: 1px #bdbdbd solid;
+  color: #FFFFFF;
+}
+
+.button:hover, .button:focus {
+  border-color: black;
+  color: #000;
+}
+
+.header {
+  font-size: 5rem;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  margin: 0;
+  padding: 0.5rem 0 1rem 0;
+  background-color: #ffc165;
 }
